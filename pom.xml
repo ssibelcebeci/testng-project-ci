@@ -91,6 +91,17 @@
                 <artifactId>allure-maven</artifactId>
                 <version>2.12.0</version>
             </plugin>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>24</source>
+                    <target>24</target>
+                    <release>24</release>
+                </configuration>
+            </plugin>
 
         </plugins>
     </build>
