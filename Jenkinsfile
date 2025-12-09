@@ -1,46 +1,21 @@
 pipeline {
 
-agent any // bu pipeline dosyasina her hangi bir özel agent eklemedik
+    agent any
 
-// jenkins icerisinde jdk ve maven i tanimladik. bu sayede localdeki jdk ve maven a bakmayacak.
-tools {
-    jdk 'JDK21'
-    maven 'Maven-3.9'
-}
-
-// stages sirayla jenkins in calistiracagi komutlar
-stages {
-// ilk adimda github tan projeyi cekip, main branche checkout oluyor
-
-    stage('Checkout') {
-    steps {
-    git branch: 'main',
-            url: 'https://github.com/mehmet-simsek-pg/testng_project.git'
+    tools {
+        jdk 'JDK21'
+        maven 'Maven-3.9'
     }
 
-}
+    stages {
 
-// 2. stepte testleri calistiriyor
-    stage('Run Test') {
-    steps {
-    // Mac
-                   sh 'mvn clean test'
-
-                   // Windows
-                   //bat 'mvn clean test'
-    }
-
-}
-
-        // bu stepte ise reportu olusturuyor
-    stage('Generate Allure Report') {
-    // allure result un olustugu klasörü tanimladik
-       steps {
-            allure([
-                commandline: 'Allure',
-                results: [[path: 'target/allure-results']]
-                   ])
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/ssibelcebeci/testng-project-ci.git'
+            }
         }
-}
-}
-}
+
+        stage('Run Test') {
+            steps {
+                sh 'mvn clean te
