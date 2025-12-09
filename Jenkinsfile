@@ -1,34 +1,17 @@
 pipeline {
 
-    agent any
+    agent any  // bu pipeline dosyasina her hangi bir özel agent eklemedik
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(
-            numToKeepStr: '20',
-            artifactNumToKeepStr: '10'
-        ))
-    }
-
-    environment {
-        ALLURE_RESULTS_PATH = 'target/allure-results'
-        RECIPIENTS          = 'sibellovski@gmail.com'
-    }
-
+// jenkins icerisinde jdk ve maven i tanimladik. bu sayede localdeki jdk ve maven a bakmayacak.
     tools {
-        jdk    'JDK24'
-        maven  'Maven-3.9'
+        jdk 'JDK24'
+        maven 'Maven-3.9'
     }
 
+// stages sirayla jenkins in calistiracagi komutlar
     stages {
 
-        stage('Prepare Workspace') {
-            steps {
-                deleteDir()
-            }
-        }
-
+// ilk adimda github tan projeyi cekip, main branche checkout oluyor
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -36,72 +19,34 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+// 2. stepte testleri calistiriyor
+        stage('Run Tests') {
             steps {
-                sh 'mvn -U -B clean test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
+            //MAC
+                sh 'mvn clean test'
+            // Windows
+            //bat 'mvn clean test'
             }
         }
 
+        // bu stepte ise reportu olusturuyor
         stage('Generate Allure Report') {
             steps {
-                allure([
-                    commandLine: 'Allure',
-                    results: [[path: "${ALLURE_RESULTS_PATH}"]]
-                ])
-            }
-        }
-
-        stage('Zip Allure Results') {
-            steps {
-                sh 'rm -f allure-results.zip || true'
-                sh "zip -r allure-results.zip ${ALLURE_RESULTS_PATH}"
-                archiveArtifacts artifacts: 'allure-results.zip', fingerprint: true
+                sh '''
+                    allure generate target/allure-results -o target/allure-report --clean
+                '''
             }
         }
     }
 
     post {
-
-        success {
-            emailext(
-                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-Result: SUCCESS
-
-Allure Report:
-${env.BUILD_URL}allure
-""",
-                to: "${RECIPIENTS}",
-                attachmentsPattern: 'allure-results.zip'
-            )
-        }
-
-        failure {
-            emailext(
-                subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-Result: FAILED
-
-Details:
-${env.BUILD_URL}
-""",
-                to: "${RECIPIENTS}",
-                attachLog: true,
-                attachmentsPattern: 'allure-results.zip'
-            )
-        }
-
         always {
-            echo "Build finished. Result: ${currentBuild.currentResult}"
+            publishHTML(target: [
+                // allure result un olustugu klasörü tanimladik
+                reportDir: 'target/allure-report',
+                reportFiles: 'index.html',
+                reportName: 'Allure Report'
+            ])
         }
     }
 }
