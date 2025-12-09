@@ -3,9 +3,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
+        jdk 'JDK24'
         maven 'Maven-3.9'
-        allure 'allure'
     }
 
     stages {
